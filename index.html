@@ -5,13 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Registration | Sastra on Stage 2027: OEDIPUS</title>
 <style>
-  :root{
-    --wine:#5a182b; --wine-soft:#8c3a52; --cream:#faf7f4; --ink:#2b1a20;
-    --muted:#6f5e63; --line:#e3d9d6; --taken:#d8d0c8; --blocked:#e6e0da;
-  }
+  :root{--wine:#5a182b;--cream:#faf7f4;--ink:#2b1a20;--muted:#6f5e63;--line:#e3d9d6;--taken:#d8d0c8;--blocked:#e6e0da}
   *{box-sizing:border-box}
   body{margin:0;background:#f3eeea;color:var(--ink);font-family:Georgia,'Times New Roman',serif;line-height:1.55}
-  main{max-width:740px;margin:0 auto;padding:32px 20px 64px}
+  main{max-width:740px;margin:0 auto;padding:32px 16px 64px}
   h1{font-size:2rem;margin:0 0 4px;color:var(--wine)}
   .tag{color:var(--muted);font-style:italic;margin:0 0 28px}
   label{display:block;font-weight:bold;margin:18px 0 6px}
@@ -20,18 +17,25 @@
   input,select{width:100%;padding:11px 12px;font:inherit;border:1px solid var(--line);border-radius:8px;background:#fff}
   input[readonly]{background:#f1ebe7;color:var(--muted)}
   input:focus,select:focus,button:focus-visible{outline:2px solid var(--wine);outline-offset:1px}
-  .map{background:var(--cream);border:1px solid var(--line);border-radius:12px;padding:16px;overflow-x:auto}
-  .stage{background:var(--wine);color:#fff;text-align:center;letter-spacing:.2em;padding:18px;border-radius:8px;margin-bottom:14px}
-  .row{display:flex;align-items:center;gap:4px;margin-bottom:6px;min-width:max-content}
-  .row .name{width:22px;font-weight:bold;text-align:center}
-  .sec{display:flex;gap:4px}
-  .aisle{width:22px}
-  .seat{width:26px;height:34px;border:1px solid var(--line);background:#fff;border-radius:5px;font:inherit;font-size:.78rem;padding:0;cursor:pointer;color:var(--ink)}
-  .seat:hover:not(:disabled){border-color:var(--wine)}
-  .seat.mine{background:var(--wine);color:#fff;border-color:var(--wine)}
-  .seat.taken{background:var(--taken);color:#8d837b;text-decoration:line-through;cursor:not-allowed}
-  .seat.blocked{background:var(--blocked);color:#b3aaa3;cursor:not-allowed;border-style:dashed}
-  .legend{display:flex;flex-wrap:wrap;gap:16px;margin-top:14px;font-size:.92rem}
+  .map{background:var(--cream);border:1px solid var(--line);border-radius:12px;padding:14px}
+  .stage{background:var(--wine);color:#fff;text-align:center;letter-spacing:.2em;padding:18px;border-radius:8px;margin-bottom:10px}
+  .pub{background:var(--taken);color:#7d746d;text-align:center;padding:14px;border-radius:8px;margin-bottom:8px;font-size:.95rem}
+  .row{display:flex;gap:8px;margin-bottom:8px}
+  .row>*{min-width:0}
+  .L,.R{flex:5}.C{flex:10}
+  .blk{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:50px;padding:6px 2px;width:100%;
+       background:#fff;border:1px solid var(--line);border-radius:8px;font:inherit;color:var(--ink);cursor:pointer;text-align:center}
+  .blk b{font-size:.9rem;letter-spacing:.03em}
+  .blk small{font-size:.75rem;color:var(--muted)}
+  .blk:hover:not(:disabled){border-color:var(--wine)}
+  .blk.mine{background:var(--wine);border-color:var(--wine);color:#fff}
+  .blk.mine small{color:#f0d9df}
+  .blk:disabled{cursor:not-allowed;background:var(--taken);color:#8d837b}
+  .blk.blocked:disabled{background:var(--blocked);border-style:dashed;color:#b3aaa3}
+  .blk:disabled small{color:#8d837b}
+  .blk.short{background:var(--taken);color:#8d837b}
+  .spacer{visibility:hidden}
+  .legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:12px;font-size:.9rem}
   .legend i{display:inline-block;width:16px;height:16px;border-radius:4px;border:1px solid var(--line);vertical-align:-3px;margin-right:6px}
   #summary{font-weight:bold;font-size:1.1rem;margin:18px 0 4px}
   #msg{min-height:1.4em;margin:6px 0}
@@ -70,28 +74,20 @@
     <label for="cat">Attendee Category</label>
     <input id="cat" type="text" value="Family / Parents" readonly>
 
-    <label for="src">Where did you get information about this event?</label>
-    <select id="src">
-      <option>University</option>
-      <option>Instagram</option>
-      <option>Friend / Family</option>
-      <option>Poster</option>
-      <option>Other</option>
-    </select>
-
-    <label>Choose your seats</label>
-    <p class="hint">Select as many seats as the number of participants. Greyed-out seats are taken or unavailable.</p>
+    <label>Choose your seating area</label>
+    <p class="hint">Pick one area for everyone in your group. Seating inside the area is not numbered. Greyed-out areas are full or unavailable.</p>
     <div class="map">
       <div class="stage">STAGE</div>
-      <div id="seats"></div>
+      <div class="pub">A</div>
+      <div id="blocks"></div>
       <div class="legend">
         <span><i style="background:#fff"></i>Available</span>
-        <span><i style="background:var(--wine)"></i>Your seat</span>
-        <span><i style="background:var(--taken)"></i>Taken</span>
+        <span><i style="background:var(--wine)"></i>Your choice</span>
+        <span><i style="background:var(--taken)"></i>Full</span>
         <span><i style="background:var(--blocked);border-style:dashed"></i>Unavailable</span>
       </div>
     </div>
-    <p id="summary">No seats selected</p>
+    <p id="summary">No area selected</p>
     <p id="msg" role="status"></p>
     <button class="go" id="go" type="submit">Register</button>
   </form>
@@ -102,92 +98,75 @@
     <div class="reserved"><b>Registration received</b><br>Your seats are reserved: <b id="dSeats"></b>. We will email you at <b id="dEmail"></b> once the committee confirms your registration.</div>
     <p>Please check your email for your registration confirmation.</p>
     <p>Kindly arrive and complete your check-in at least 30 minutes before the show starts.</p>
-    <p>See you at the show! 🎭</p>
+    <p>See you at the show! &#127917;</p>
   </section>
 </main>
 
 <script>
-/* 1) Paste your Apps Script Web App URL here (ends with /exec) */
 const API_URL = "https://script.google.com/macros/s/AKfycbzLBpxOwxTuBPvWhUQ4e4REPJYHLO-2SvaFjH76OLUHBk9akrMgcK2q5l9KhxI-ONLL/exec";
 
-/* 2) Layout: rows A-G. Seat id format: "B-L3" = row B, Left 3 (L/C/R = left/center/right) */
-const ROWS = ["A","B","C","D","E","F","G"];
-const MIDDLE_ROWS = ["A","B","C","D","E"];           // F-G have no middle block
-const BLOCKED = new Set();                           // never selectable
-ROWS.forEach(r => ["L","C","R"].forEach(s => {
-  for (let n = 1; n <= (s === "C" ? 10 : 5); n++) {
-    if (r === "A") BLOCKED.add(`${r}-${s}${n}`);                // row A: unavailable
-    if ((r === "D" || r === "E") && s === "C") BLOCKED.add(`${r}-${s}${n}`); // lecturers
-  }
-}));
+/* Capacity per block (people). Must match Code.gs.
+   0 = unavailable. C CENTER = 10 minus 6 reserved for aslab. D/E CENTER = lecturers. */
+const ROWS = ["B","C","D","E","F","G"];
+const CENTER_ROWS = ["B","C","D","E"];
+const CAP = {};
+ROWS.forEach(r => { CAP[r+" LEFT"] = 5; CAP[r+" RIGHT"] = 5; });
+CENTER_ROWS.forEach(r => { CAP[r+" CENTER"] = 10; });
+CAP["C CENTER"] = 4;
+CAP["D CENTER"] = 0;
+CAP["E CENTER"] = 0;
 
-let taken = new Set();
-let mine = [];
+let used = {};
+let mine = null;
 const $ = id => document.getElementById(id);
 const qty = () => parseInt($("qty").value, 10);
+const left = id => Math.max(0, CAP[id] - (used[id] || 0));
 
 function render() {
-  const box = $("seats");
+  const box = $("blocks");
   box.innerHTML = "";
   ROWS.forEach(r => {
     const row = document.createElement("div");
     row.className = "row";
-    row.innerHTML = `<span class="name">${r}</span>`;
-    const secs = [["L",5]];
-    if (MIDDLE_ROWS.includes(r)) secs.push(["C",10]); else secs.push(["gap",10]);
-    secs.push(["R",5]);
-    secs.forEach(([s, count], i) => {
-      if (i > 0) row.insertAdjacentHTML("beforeend", '<span class="aisle"></span>');
-      const wrap = document.createElement("div");
-      wrap.className = "sec";
-      if (s === "gap") { wrap.style.width = `${10*30-4}px`; row.appendChild(wrap); return; }
-      for (let n = 1; n <= count; n++) {
-        const id = `${r}-${s}${n}`;
-        const b = document.createElement("button");
-        b.type = "button";
-        b.className = "seat";
-        b.textContent = n;
-        b.dataset.id = id;
-        b.setAttribute("aria-label", `Row ${r}, ${s==="L"?"left":s==="C"?"center":"right"} block, seat ${n}`);
-        if (BLOCKED.has(id)) { b.classList.add("blocked"); b.disabled = true; }
-        else if (taken.has(id)) { b.classList.add("taken"); b.disabled = true; }
-        else if (mine.includes(id)) b.classList.add("mine");
-        b.onclick = () => toggle(id);
-        wrap.appendChild(b);
+    const slots = [["LEFT","L"], ["CENTER","C"], ["RIGHT","R"]];
+    slots.forEach(([name, cls]) => {
+      const id = `${r} ${name}`;
+      if (!(id in CAP)) { const sp = document.createElement("div"); sp.className = cls + " spacer"; row.appendChild(sp); return; }
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "blk " + cls;
+      const rem = left(id);
+      b.setAttribute("aria-label", id);
+      b.innerHTML = `<b>${r}</b>`;
+      if (CAP[id] === 0) { b.classList.add("blocked"); b.disabled = true; }
+      else if (rem === 0) { b.disabled = true; b.title = "Full"; }
+      else if (rem < qty()) {
+        b.classList.add("short");
+        b.onclick = () => { mine = null; render(); say(`Only ${rem} seat left in ${id}, not enough for ${qty()} people.`, false); };
+      } else {
+        if (mine === id) { b.classList.add("mine"); b.innerHTML = `<b>${r}</b><small>${rem} seats remaining</small>`; }
+        b.onclick = () => { say("", true); mine = (mine === id) ? null : id; render(); };
       }
-      row.appendChild(wrap);
+      row.appendChild(b);
     });
     box.appendChild(row);
   });
-  const label = id => id;
-  $("summary").textContent = mine.length
-    ? `Selected (${mine.length}/${qty()}): ${mine.map(label).join(", ")}`
-    : "No seats selected";
+  $("summary").textContent = mine ? `Selected: ${mine} (${qty()} ${qty() > 1 ? "people" : "person"})` : "No area selected";
 }
 
-function toggle(id) {
-  if (mine.includes(id)) mine = mine.filter(x => x !== id);
-  else {
-    if (mine.length >= qty()) mine.shift();   // replace oldest pick when limit reached
-    mine.push(id);
-  }
-  render();
-}
+function say(t, ok) { const m = $("msg"); m.textContent = t; m.className = ok ? "ok" : "err"; }
 
-function say(text, ok) { const m = $("msg"); m.textContent = text; m.className = ok ? "ok" : "err"; }
-
-async function loadSeats() {
+async function load() {
   try {
     const r = await fetch(`${API_URL}?action=seats&t=${Date.now()}`);
     const d = await r.json();
-    taken = new Set(d.taken || []);
-    const lost = mine.filter(s => taken.has(s));
-    if (lost.length) { mine = mine.filter(s => !taken.has(s)); say("Seat " + lost.join(", ") + " was just taken by someone else. Please pick another.", false); }
+    used = d.used || {};
+    if (mine && left(mine) < qty()) { say(`${mine} just filled up. Please choose another area.`, false); mine = null; }
     render();
-  } catch (e) { say("Could not load seat availability. Please refresh the page.", false); }
+  } catch (e) { say("Could not load availability. Please refresh the page.", false); }
 }
 
-$("qty").onchange = () => { mine = mine.slice(0, qty()); render(); };
+$("qty").onchange = () => { if (mine && left(mine) < qty()) mine = null; render(); };
 
 $("f").onsubmit = async ev => {
   ev.preventDefault();
@@ -195,37 +174,36 @@ $("f").onsubmit = async ev => {
   if (!/^\S+@\S+\.\S+$/.test(email)) return say("Please enter a valid email.", false);
   if (!name) return say("Please enter your full name.", false);
   if (!/^\+?[0-9\s-]{9,16}$/.test(wa)) return say("Please enter a valid WhatsApp number.", false);
-  if (mine.length !== qty()) return say(`Please select exactly ${qty()} seat(s).`, false);
+  if (!mine) return say("Please choose a seating area.", false);
 
   const btn = $("go"); btn.disabled = true; btn.textContent = "Registering...";
   try {
     const r = await fetch(API_URL, {
       method: "POST",
-      headers: { "Content-Type": "text/plain;charset=utf-8" },  // avoids CORS preflight
-      body: JSON.stringify({ email, name, wa, qty: qty(), category: $("cat").value, source: $("src").value, seats: mine })
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ email, name, wa, qty: qty(), category: $("cat").value, seat: mine })
     });
     const d = await r.json();
     if (d.ok) {
-      $("dSeats").textContent = mine.join(", ");
+      $("dSeats").textContent = `${mine} (${qty()} ${qty() > 1 ? "people" : "person"})`;
       $("dEmail").textContent = email;
       $("f").style.display = "none";
       $("done").style.display = "block";
       $("done").focus();
       window.scrollTo({ top: 0, behavior: "smooth" });
-      mine = [];
-    } else if (d.error === "taken") {
-      say("Sorry, seat " + d.seats.join(", ") + " was just taken. Please choose another.", false);
-    } else if (d.error === "busy") {
-      say("The system is busy. Please try again in a few seconds.", false);
-    } else say("Registration failed: " + (d.error || "unknown error"), false);
+      mine = null;
+    } else if (d.error === "full") {
+      say(`Sorry, ${mine} no longer has enough space. Please choose another area.`, false); mine = null;
+    } else if (d.error === "busy") say("The system is busy. Please try again in a few seconds.", false);
+    else say("Registration failed: " + (d.error || "unknown error"), false);
   } catch (e) { say("Network error. Please try again.", false); }
   btn.disabled = false; btn.textContent = "Register";
-  loadSeats();
+  load();
 };
 
 render();
-loadSeats();
-setInterval(loadSeats, 20000);   // keep seat map fresh
+load();
+setInterval(load, 20000);
 </script>
 </body>
 </html>
