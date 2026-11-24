@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Registration | Sastra on Stage 2027: OEDIPUS</title>
+<style>
+  :root{
+    --wine:#5a182b; --wine-soft:#8c3a52; --cream:#faf7f4; --ink:#2b1a20;
+    --muted:#6f5e63; --line:#e3d9d6; --taken:#d8d0c8; --blocked:#e6e0da;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#f3eeea;color:var(--ink);font-family:Georgia,'Times New Roman',serif;line-height:1.55}
+  main{max-width:740px;margin:0 auto;padding:32px 20px 64px}
+  h1{font-size:2rem;margin:0 0 4px;color:var(--wine)}
+  .tag{color:var(--muted);font-style:italic;margin:0 0 28px}
+  label{display:block;font-weight:bold;margin:18px 0 6px}
+  .hint{font-size:.9rem;color:var(--muted);margin:2px 0 6px;font-weight:normal}
+  .warn{font-size:.92rem;background:#f6e9ec;border-left:3px solid var(--wine);padding:8px 12px;margin:8px 0 0}
+  input,select{width:100%;padding:11px 12px;font:inherit;border:1px solid var(--line);border-radius:8px;background:#fff}
+  input[readonly]{background:#f1ebe7;color:var(--muted)}
+  input:focus,select:focus,button:focus-visible{outline:2px solid var(--wine);outline-offset:1px}
+  .map{background:var(--cream);border:1px solid var(--line);border-radius:12px;padding:16px;overflow-x:auto}
+  .stage{background:var(--wine);color:#fff;text-align:center;letter-spacing:.2em;padding:18px;border-radius:8px;margin-bottom:14px}
+  .row{display:flex;align-items:center;gap:4px;margin-bottom:6px;min-width:max-content}
+  .row .name{width:22px;font-weight:bold;text-align:center}
+  .sec{display:flex;gap:4px}
+  .aisle{width:22px}
+  .seat{width:26px;height:34px;border:1px solid var(--line);background:#fff;border-radius:5px;font:inherit;font-size:.78rem;padding:0;cursor:pointer;color:var(--ink)}
+  .seat:hover:not(:disabled){border-color:var(--wine)}
+  .seat.mine{background:var(--wine);color:#fff;border-color:var(--wine)}
+  .seat.taken{background:var(--taken);color:#8d837b;text-decoration:line-through;cursor:not-allowed}
+  .seat.blocked{background:var(--blocked);color:#b3aaa3;cursor:not-allowed;border-style:dashed}
+  .legend{display:flex;flex-wrap:wrap;gap:16px;margin-top:14px;font-size:.92rem}
+  .legend i{display:inline-block;width:16px;height:16px;border-radius:4px;border:1px solid var(--line);vertical-align:-3px;margin-right:6px}
+  #summary{font-weight:bold;font-size:1.1rem;margin:18px 0 4px}
+  #msg{min-height:1.4em;margin:6px 0}
+  .err{color:#a3162f}.ok{color:#1f6b3a}
+  #done{display:none;background:var(--cream);border:1px solid var(--line);border-radius:12px;padding:28px 24px}
+  #done h2{margin:0 0 14px;color:var(--wine);font-size:1.5rem}
+  #done .reserved{background:#fff;border-left:3px solid var(--wine);padding:12px 14px;margin:16px 0}
+  button.go{width:100%;margin-top:10px;padding:14px;border:0;border-radius:8px;background:var(--wine);color:#fff;font:inherit;font-size:1.05rem;cursor:pointer}
+  button.go:disabled{opacity:.55;cursor:wait}
+</style>
+</head>
+<body>
+<main>
+  <h1>Sastra on Stage 2027: OEDIPUS</h1>
+  <p class="tag">One final requiem, for the dead<br>Oh fate, sing us your unending tale.</p>
+
+  <form id="f" novalidate>
+    <label for="email">Email</label>
+    <input id="email" type="email" required autocomplete="email">
+
+    <label for="name">Full Name</label>
+    <p class="hint">If you are registering more than one person, please enter only one name as the representative.</p>
+    <input id="name" type="text" required autocomplete="name">
+
+    <label for="wa">WhatsApp Number</label>
+    <p class="hint">Please make sure this number is active and can be contacted.</p>
+    <input id="wa" type="tel" required inputmode="tel" placeholder="08xxxxxxxxxx">
+
+    <label for="qty">Quantity of Participants</label>
+    <select id="qty">
+      <option value="1">1</option>
+      <option value="2">2</option>
+    </select>
+    <div class="warn">Maximum 2 seats per registration. If you bring a child aged 6 or above, they need their own seat, so please book 1 more.</div>
+
+    <label for="cat">Attendee Category</label>
+    <input id="cat" type="text" value="Family / Parents" readonly>
+
+    <label for="src">Where did you get information about this event?</label>
+    <select id="src">
+      <option>University</option>
+      <option>Instagram</option>
+      <option>Friend / Family</option>
+      <option>Poster</option>
+      <option>Other</option>
+    </select>
+
+    <label>Choose your seats</label>
+    <p class="hint">Select as many seats as the number of participants. Greyed-out seats are taken or unavailable.</p>
+    <div class="map">
+      <div class="stage">STAGE</div>
+      <div id="seats"></div>
+      <div class="legend">
+        <span><i style="background:#fff"></i>Available</span>
+        <span><i style="background:var(--wine)"></i>Your seat</span>
+        <span><i style="background:var(--taken)"></i>Taken</span>
+        <span><i style="background:var(--blocked);border-style:dashed"></i>Unavailable</span>
+      </div>
+    </div>
+    <p id="summary">No seats selected</p>
+    <p id="msg" role="status"></p>
+    <button class="go" id="go" type="submit">Register</button>
+  </form>
+
+  <section id="done" role="status" tabindex="-1">
+    <h2>Thank you for being part of Sastra on Stage 2027: OEDIPUS!</h2>
+    <p>Your registration has been successfully submitted. We appreciate your interest and look forward to welcoming you to this theatrical experience.</p>
+    <div class="reserved"><b>Registration received</b><br>Your seats are reserved: <b id="dSeats"></b>. We will email you at <b id="dEmail"></b> once the committee confirms your registration.</div>
+    <p>Please check your email for your registration confirmation.</p>
+    <p>Kindly arrive and complete your check-in at least 30 minutes before the show starts.</p>
+    <p>See you at the show! 🎭</p>
+  </section>
+</main>
+
+<script>
+/* 1) Paste your Apps Script Web App URL here (ends with /exec) */
+const API_URL = "https://script.google.com/macros/s/AKfycbzLBpxOwxTuBPvWhUQ4e4REPJYHLO-2SvaFjH76OLUHBk9akrMgcK2q5l9KhxI-ONLL/exec";
+
+/* 2) Layout: rows A-G. Seat id format: "B-L3" = row B, Left 3 (L/C/R = left/center/right) */
+const ROWS = ["A","B","C","D","E","F","G"];
+const MIDDLE_ROWS = ["A","B","C","D","E"];           // F-G have no middle block
+const BLOCKED = new Set();                           // never selectable
+ROWS.forEach(r => ["L","C","R"].forEach(s => {
+  for (let n = 1; n <= (s === "C" ? 10 : 5); n++) {
+    if (r === "A") BLOCKED.add(`${r}-${s}${n}`);                // row A: unavailable
+    if ((r === "D" || r === "E") && s === "C") BLOCKED.add(`${r}-${s}${n}`); // lecturers
+  }
+}));
+
+let taken = new Set();
+let mine = [];
+const $ = id => document.getElementById(id);
+const qty = () => parseInt($("qty").value, 10);
+
+function render() {
+  const box = $("seats");
+  box.innerHTML = "";
+  ROWS.forEach(r => {
+    const row = document.createElement("div");
+    row.className = "row";
+    row.innerHTML = `<span class="name">${r}</span>`;
+    const secs = [["L",5]];
+    if (MIDDLE_ROWS.includes(r)) secs.push(["C",10]); else secs.push(["gap",10]);
+    secs.push(["R",5]);
+    secs.forEach(([s, count], i) => {
+      if (i > 0) row.insertAdjacentHTML("beforeend", '<span class="aisle"></span>');
+      const wrap = document.createElement("div");
+      wrap.className = "sec";
+      if (s === "gap") { wrap.style.width = `${10*30-4}px`; row.appendChild(wrap); return; }
+      for (let n = 1; n <= count; n++) {
+        const id = `${r}-${s}${n}`;
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "seat";
+        b.textContent = n;
+        b.dataset.id = id;
+        b.setAttribute("aria-label", `Row ${r}, ${s==="L"?"left":s==="C"?"center":"right"} block, seat ${n}`);
+        if (BLOCKED.has(id)) { b.classList.add("blocked"); b.disabled = true; }
+        else if (taken.has(id)) { b.classList.add("taken"); b.disabled = true; }
+        else if (mine.includes(id)) b.classList.add("mine");
+        b.onclick = () => toggle(id);
+        wrap.appendChild(b);
+      }
+      row.appendChild(wrap);
+    });
+    box.appendChild(row);
+  });
+  const label = id => id;
+  $("summary").textContent = mine.length
+    ? `Selected (${mine.length}/${qty()}): ${mine.map(label).join(", ")}`
+    : "No seats selected";
+}
+
+function toggle(id) {
+  if (mine.includes(id)) mine = mine.filter(x => x !== id);
+  else {
+    if (mine.length >= qty()) mine.shift();   // replace oldest pick when limit reached
+    mine.push(id);
+  }
+  render();
+}
+
+function say(text, ok) { const m = $("msg"); m.textContent = text; m.className = ok ? "ok" : "err"; }
+
+async function loadSeats() {
+  try {
+    const r = await fetch(`${API_URL}?action=seats&t=${Date.now()}`);
+    const d = await r.json();
+    taken = new Set(d.taken || []);
+    const lost = mine.filter(s => taken.has(s));
+    if (lost.length) { mine = mine.filter(s => !taken.has(s)); say("Seat " + lost.join(", ") + " was just taken by someone else. Please pick another.", false); }
+    render();
+  } catch (e) { say("Could not load seat availability. Please refresh the page.", false); }
+}
+
+$("qty").onchange = () => { mine = mine.slice(0, qty()); render(); };
+
+$("f").onsubmit = async ev => {
+  ev.preventDefault();
+  const email = $("email").value.trim(), name = $("name").value.trim(), wa = $("wa").value.trim();
+  if (!/^\S+@\S+\.\S+$/.test(email)) return say("Please enter a valid email.", false);
+  if (!name) return say("Please enter your full name.", false);
+  if (!/^\+?[0-9\s-]{9,16}$/.test(wa)) return say("Please enter a valid WhatsApp number.", false);
+  if (mine.length !== qty()) return say(`Please select exactly ${qty()} seat(s).`, false);
+
+  const btn = $("go"); btn.disabled = true; btn.textContent = "Registering...";
+  try {
+    const r = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },  // avoids CORS preflight
+      body: JSON.stringify({ email, name, wa, qty: qty(), category: $("cat").value, source: $("src").value, seats: mine })
+    });
+    const d = await r.json();
+    if (d.ok) {
+      $("dSeats").textContent = mine.join(", ");
+      $("dEmail").textContent = email;
+      $("f").style.display = "none";
+      $("done").style.display = "block";
+      $("done").focus();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      mine = [];
+    } else if (d.error === "taken") {
+      say("Sorry, seat " + d.seats.join(", ") + " was just taken. Please choose another.", false);
+    } else if (d.error === "busy") {
+      say("The system is busy. Please try again in a few seconds.", false);
+    } else say("Registration failed: " + (d.error || "unknown error"), false);
+  } catch (e) { say("Network error. Please try again.", false); }
+  btn.disabled = false; btn.textContent = "Register";
+  loadSeats();
+};
+
+render();
+loadSeats();
+setInterval(loadSeats, 20000);   // keep seat map fresh
+</script>
+</body>
+</html>
