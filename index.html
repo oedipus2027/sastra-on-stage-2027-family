@@ -34,6 +34,10 @@
   .blk.blocked:disabled{background:var(--blocked);border-style:dashed;color:#b3aaa3}
   .blk:disabled small{color:#8d837b}
   .blk.short{background:var(--taken);color:#8d837b}
+  .inner{display:flex;gap:8px;min-width:0}
+  .inner .sm{flex:3}
+  .inner .gapf{flex:4}
+  .stair{flex:0 0 14px;width:14px;height:14px;border-radius:50%;background:#8c3a52;align-self:center}
   .spacer{visibility:hidden}
   .legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:12px;font-size:.9rem}
   .legend i{display:inline-block;width:16px;height:16px;border-radius:4px;border:1px solid var(--line);vertical-align:-3px;margin-right:6px}
@@ -85,6 +89,7 @@
         <span><i style="background:var(--wine)"></i>Your choice</span>
         <span><i style="background:var(--taken)"></i>Full</span>
         <span><i style="background:var(--blocked);border-style:dashed"></i>Unavailable</span>
+        <span><i style="background:#8c3a52;border-radius:50%"></i>Stairs</span>
       </div>
     </div>
     <p id="summary">No area selected</p>
@@ -115,6 +120,8 @@ CENTER_ROWS.forEach(r => { CAP[r+" CENTER"] = 10; });
 CAP["C CENTER"] = 4;
 CAP["D CENTER"] = 0;
 CAP["E CENTER"] = 0;
+const INNER_ROWS = ["F","G"];   // rows with 2 extra small blocks (2 seats each) near the middle
+INNER_ROWS.forEach(r => { CAP[r+" CENTER LEFT"] = 2; CAP[r+" CENTER RIGHT"] = 2; });
 
 let used = {};
 let mine = null;
@@ -122,33 +129,47 @@ const $ = id => document.getElementById(id);
 const qty = () => parseInt($("qty").value, 10);
 const left = id => Math.max(0, CAP[id] - (used[id] || 0));
 
+function makeBtn(r, id, cls) {
+  const b = document.createElement("button");
+  b.type = "button";
+  b.className = "blk " + cls;
+  b.setAttribute("aria-label", id);
+  b.innerHTML = `<b>${r}</b>`;
+  const rem = left(id);
+  if (CAP[id] === 0) { b.classList.add("blocked"); b.disabled = true; }
+  else if (rem === 0) { b.disabled = true; b.title = "Full"; }
+  else if (rem < qty()) {
+    b.classList.add("short");
+    b.onclick = () => { mine = null; render(); say(`Only ${rem} seat left in ${id}, not enough for ${qty()} people.`, false); };
+  } else {
+    if (mine === id) {
+      b.classList.add("mine");
+      b.innerHTML = `<b>${r}</b><small>${CAP[id] <= 2 ? rem + " left" : rem + " seats remaining"}</small>`;
+    }
+    b.onclick = () => { say("", true); mine = (mine === id) ? null : id; render(); };
+  }
+  return b;
+}
+
 function render() {
   const box = $("blocks");
   box.innerHTML = "";
   ROWS.forEach(r => {
     const row = document.createElement("div");
     row.className = "row";
-    const slots = [["LEFT","L"], ["CENTER","C"], ["RIGHT","R"]];
-    slots.forEach(([name, cls]) => {
-      const id = `${r} ${name}`;
-      if (!(id in CAP)) { const sp = document.createElement("div"); sp.className = cls + " spacer"; row.appendChild(sp); return; }
-      const b = document.createElement("button");
-      b.type = "button";
-      b.className = "blk " + cls;
-      const rem = left(id);
-      b.setAttribute("aria-label", id);
-      b.innerHTML = `<b>${r}</b>`;
-      if (CAP[id] === 0) { b.classList.add("blocked"); b.disabled = true; }
-      else if (rem === 0) { b.disabled = true; b.title = "Full"; }
-      else if (rem < qty()) {
-        b.classList.add("short");
-        b.onclick = () => { mine = null; render(); say(`Only ${rem} seat left in ${id}, not enough for ${qty()} people.`, false); };
-      } else {
-        if (mine === id) { b.classList.add("mine"); b.innerHTML = `<b>${r}</b><small>${rem} seats remaining</small>`; }
-        b.onclick = () => { say("", true); mine = (mine === id) ? null : id; render(); };
-      }
-      row.appendChild(b);
-    });
+    const stair = () => { const s = document.createElement("span"); s.className = "stair"; s.setAttribute("aria-hidden", "true"); return s; };
+    row.appendChild(makeBtn(r, `${r} LEFT`, "L"));
+    row.appendChild(stair());
+    if (INNER_ROWS.includes(r)) {
+      const inner = document.createElement("div");
+      inner.className = "C inner";
+      inner.appendChild(makeBtn(r, `${r} CENTER LEFT`, "sm"));
+      const gap = document.createElement("div"); gap.className = "gapf"; inner.appendChild(gap);
+      inner.appendChild(makeBtn(r, `${r} CENTER RIGHT`, "sm"));
+      row.appendChild(inner);
+    } else row.appendChild(makeBtn(r, `${r} CENTER`, "C"));
+    row.appendChild(stair());
+    row.appendChild(makeBtn(r, `${r} RIGHT`, "R"));
     box.appendChild(row);
   });
   $("summary").textContent = mine ? `Selected: ${mine} (${qty()} ${qty() > 1 ? "people" : "person"})` : "No area selected";
