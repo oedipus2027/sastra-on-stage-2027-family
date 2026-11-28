@@ -167,7 +167,7 @@ function makeBlock(r, id, cls) {
   const rem = left(id), cur = sel[id] || 0;
   if (CAP[id] === 0) { b.classList.add("blocked"); b.innerHTML = `<b>${r}</b>`; return b; }
   const name = NAMES[id.slice(2)];
-  if (rem === 0) { b.classList.add("full"); b.innerHTML = `<span class="lbl">${name}</span><span class="rem">Full</span>`; return b; }
+  if (rem === 0) { b.classList.add("blocked"); b.innerHTML = `<b>${r}</b>`; return b; }
   if (cur > 0) b.classList.add("on");
   b.innerHTML = `<span class="lbl">${name}</span><span class="rem">${rem} left</span>
     <div class="step"><button type="button" class="sb" aria-label="Remove one seat from ${id}">&minus;</button><span class="n">${cur}</span><button type="button" class="sb" aria-label="Add one seat to ${id}">+</button></div>`;
