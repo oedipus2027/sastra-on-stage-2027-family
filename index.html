@@ -38,6 +38,29 @@
   .inner .sm{flex:3}
   .inner .gapf{flex:4}
   .stair{flex:0 0 14px;width:14px;height:14px;border-radius:50%;background:#8c3a52;align-self:center}
+  /* stepper blocks */
+  .rl{flex:0 0 16px;align-self:center;text-align:center;font-weight:bold}
+  div.blk{cursor:default;min-height:0;padding:3px 2px;gap:0}
+  div.blk.blocked{background:var(--blocked);border-style:dashed;color:#b3aaa3;min-height:32px}
+  div.blk.full{background:var(--taken);color:#8d837b}
+  div.blk.on{border:2px solid var(--wine)}
+  .lbl{font-size:.68rem;color:var(--muted);line-height:1.1}
+  .rem{font-size:.78rem;font-weight:bold;line-height:1.15}
+  .step{display:flex;align-items:center;gap:5px;margin-top:1px}
+  .step .n{min-width:14px;font-weight:bold}
+  .sb{width:20px;height:20px;font-size:.85rem;border-radius:50%;border:1px solid var(--line);background:#fff;color:var(--ink);font:inherit;line-height:1;padding:0;cursor:pointer}
+  .sb:hover:not(:disabled){border-color:var(--wine)}
+  .sb:disabled{opacity:.35;cursor:not-allowed}
+  @media (max-width:520px){
+    .map{padding:10px}
+    .row{gap:4px;margin-bottom:5px}
+    .rl{flex-basis:14px}
+    .stair{flex-basis:10px;width:10px;height:10px}
+    .inner{gap:4px}.inner .gapf{display:none}.inner .sm{flex:1}
+    div.blk{padding:3px 1px}
+    .lbl{font-size:.6rem}.rem{font-size:.68rem}
+    .step{gap:2px}.sb{width:17px;height:17px;font-size:.75rem}.step .n{min-width:9px;font-size:.75rem}
+  }
   .spacer{visibility:hidden}
   .legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:12px;font-size:.9rem}
   .legend i{display:inline-block;width:16px;height:16px;border-radius:4px;border:1px solid var(--line);vertical-align:-3px;margin-right:6px}
@@ -79,7 +102,7 @@
     <input id="cat" type="text" value="Family / Parents" readonly>
 
     <label>Choose your seating area</label>
-    <p class="hint">Pick one area for everyone in your group. Seating inside the area is not numbered. Greyed-out areas are full or unavailable.</p>
+    <p class="hint">Use + and − to choose how many seats you want in each area. You can combine areas. Seating inside an area is not numbered. Greyed-out areas are full or unavailable.</p>
     <div class="map">
       <div class="stage">STAGE</div>
       <div class="pub">A</div>
@@ -92,7 +115,7 @@
         <span><i style="background:#8c3a52;border-radius:50%"></i>Stairs</span>
       </div>
     </div>
-    <p id="summary">No area selected</p>
+    <p id="summary">No seats selected</p>
     <p id="msg" role="status"></p>
     <button class="go" id="go" type="submit">Register</button>
   </form>
@@ -124,30 +147,35 @@ const INNER_ROWS = ["F","G"];   // rows with 2 extra small blocks (2 seats each)
 INNER_ROWS.forEach(r => { CAP[r+" CENTER LEFT"] = 2; CAP[r+" CENTER RIGHT"] = 2; });
 
 let used = {};
-let mine = null;
+let sel = {};                       // blockId -> number of seats
 const $ = id => document.getElementById(id);
-const qty = () => parseInt($("qty").value, 10);
+const qty = () => parseInt($("qty").value, 10) || 0;
+const total = () => Object.values(sel).reduce((a, b) => a + b, 0);
 const left = id => Math.max(0, CAP[id] - (used[id] || 0));
+const NAMES = { "LEFT":"Left", "CENTER":"Center", "RIGHT":"Right", "CENTER LEFT":"Center left", "CENTER RIGHT":"Center right" };
 
-function makeBtn(r, id, cls) {
-  const b = document.createElement("button");
-  b.type = "button";
+function adjust(id, d) {
+  const n = (sel[id] || 0) + d;
+  if (n <= 0) delete sel[id]; else sel[id] = n;
+  say("", true); render();
+}
+
+function makeBlock(r, id, cls) {
+  const b = document.createElement("div");
   b.className = "blk " + cls;
   b.setAttribute("aria-label", id);
-  b.innerHTML = `<b>${r}</b>`;
-  const rem = left(id);
-  if (CAP[id] === 0) { b.classList.add("blocked"); b.disabled = true; }
-  else if (rem === 0) { b.disabled = true; b.title = "Full"; }
-  else if (rem < qty()) {
-    b.classList.add("short");
-    b.onclick = () => { mine = null; render(); say(`Only ${rem} seat left in ${id}, not enough for ${qty()} people.`, false); };
-  } else {
-    if (mine === id) {
-      b.classList.add("mine");
-      b.innerHTML = `<b>${r}</b><small>${CAP[id] <= 2 ? rem + " left" : rem + " seats remaining"}</small>`;
-    }
-    b.onclick = () => { say("", true); mine = (mine === id) ? null : id; render(); };
-  }
+  const rem = left(id), cur = sel[id] || 0;
+  if (CAP[id] === 0) { b.classList.add("blocked"); b.innerHTML = `<b>${r}</b>`; return b; }
+  const name = NAMES[id.slice(2)];
+  if (rem === 0) { b.classList.add("full"); b.innerHTML = `<span class="lbl">${name}</span><span class="rem">Full</span>`; return b; }
+  if (cur > 0) b.classList.add("on");
+  b.innerHTML = `<span class="lbl">${name}</span><span class="rem">${rem} left</span>
+    <div class="step"><button type="button" class="sb" aria-label="Remove one seat from ${id}">&minus;</button><span class="n">${cur}</span><button type="button" class="sb" aria-label="Add one seat to ${id}">+</button></div>`;
+  const [minus, plus] = b.querySelectorAll(".sb");
+  minus.disabled = cur === 0;
+  plus.disabled = total() >= qty() || cur >= rem;
+  minus.onclick = () => adjust(id, -1);
+  plus.onclick = () => adjust(id, 1);
   return b;
 }
 
@@ -157,22 +185,24 @@ function render() {
   ROWS.forEach(r => {
     const row = document.createElement("div");
     row.className = "row";
+    const rl = document.createElement("span"); rl.className = "rl"; rl.textContent = r; row.appendChild(rl);
     const stair = () => { const s = document.createElement("span"); s.className = "stair"; s.setAttribute("aria-hidden", "true"); return s; };
-    row.appendChild(makeBtn(r, `${r} LEFT`, "L"));
+    row.appendChild(makeBlock(r, `${r} LEFT`, "L"));
     row.appendChild(stair());
     if (INNER_ROWS.includes(r)) {
       const inner = document.createElement("div");
       inner.className = "C inner";
-      inner.appendChild(makeBtn(r, `${r} CENTER LEFT`, "sm"));
+      inner.appendChild(makeBlock(r, `${r} CENTER LEFT`, "sm"));
       const gap = document.createElement("div"); gap.className = "gapf"; inner.appendChild(gap);
-      inner.appendChild(makeBtn(r, `${r} CENTER RIGHT`, "sm"));
+      inner.appendChild(makeBlock(r, `${r} CENTER RIGHT`, "sm"));
       row.appendChild(inner);
-    } else row.appendChild(makeBtn(r, `${r} CENTER`, "C"));
+    } else row.appendChild(makeBlock(r, `${r} CENTER`, "C"));
     row.appendChild(stair());
-    row.appendChild(makeBtn(r, `${r} RIGHT`, "R"));
+    row.appendChild(makeBlock(r, `${r} RIGHT`, "R"));
     box.appendChild(row);
   });
-  $("summary").textContent = mine ? `Selected: ${mine} (${qty()} ${qty() > 1 ? "people" : "person"})` : "No area selected";
+  const list = Object.entries(sel).map(([id, n]) => `${id} (${n})`).join(", ");
+  $("summary").textContent = !qty() ? "Please select the quantity of participants first" : total() ? `Selected ${total()}/${qty()}: ${list}` : "No seats selected";
 }
 
 function say(t, ok) { const m = $("msg"); m.textContent = t; m.className = ok ? "ok" : "err"; }
@@ -182,12 +212,17 @@ async function load() {
     const r = await fetch(`${API_URL}?action=seats&t=${Date.now()}`);
     const d = await r.json();
     used = d.used || {};
-    if (mine && left(mine) < qty()) { say(`${mine} just filled up. Please choose another area.`, false); mine = null; }
+    let changed = false;
+    Object.keys(sel).forEach(id => { if (sel[id] > left(id)) { changed = true; if (left(id) > 0) sel[id] = left(id); else delete sel[id]; } });
+    if (changed) say("Some seats were just taken by someone else. Please check your selection.", false);
     render();
   } catch (e) { say("Could not load availability. Please refresh the page.", false); }
 }
 
-$("qty").onchange = () => { if (mine && left(mine) < qty()) mine = null; render(); };
+$("qty").onchange = () => {
+  if (total() > qty()) { sel = {}; say("Quantity changed, so your seat selection was reset. Please choose your seats again.", false); }
+  render();
+};
 
 $("f").onsubmit = async ev => {
   ev.preventDefault();
@@ -195,26 +230,27 @@ $("f").onsubmit = async ev => {
   if (!/^\S+@\S+\.\S+$/.test(email)) return say("Please enter a valid email.", false);
   if (!name) return say("Please enter your full name.", false);
   if (!/^\+?[0-9\s-]{9,16}$/.test(wa)) return say("Please enter a valid WhatsApp number.", false);
-  if (!mine) return say("Please choose a seating area.", false);
+  if (total() !== qty()) return say(`Please choose exactly ${qty()} seat(s). You have chosen ${total()}.`, false);
 
+  const seats = Object.entries(sel).map(([block, n]) => ({ block, n }));
   const btn = $("go"); btn.disabled = true; btn.textContent = "Registering...";
   try {
     const r = await fetch(API_URL, {
       method: "POST",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify({ email, name, wa, qty: qty(), category: $("cat").value, seat: mine })
+      body: JSON.stringify({ email, name, wa, qty: qty(), category: $("cat").value, seats })
     });
     const d = await r.json();
     if (d.ok) {
-      $("dSeats").textContent = `${mine} (${qty()} ${qty() > 1 ? "people" : "person"})`;
+      $("dSeats").textContent = seats.map(s => `${s.block} (${s.n})`).join(", ");
       $("dEmail").textContent = email;
       $("f").style.display = "none";
       $("done").style.display = "block";
       $("done").focus();
       window.scrollTo({ top: 0, behavior: "smooth" });
-      mine = null;
+      sel = {};
     } else if (d.error === "full") {
-      say(`Sorry, ${mine} no longer has enough space. Please choose another area.`, false); mine = null;
+      say("Sorry, some of the seats you chose were just taken. Please check your selection and try again.", false);
     } else if (d.error === "busy") say("The system is busy. Please try again in a few seconds.", false);
     else say("Registration failed: " + (d.error || "unknown error"), false);
   } catch (e) { say("Network error. Please try again.", false); }
